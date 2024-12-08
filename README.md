@@ -1,5 +1,5 @@
 # Yelp Firma Yorumları Analizi
-Bu proje, **Yelp academic veriseti** kullanılarak, firma yorumlarının **pozitif**, **nötr** veya **negatif** olarak sınıflandırılmasını ve bu analizlerin anlamlı sonuçlara dönüştürülmesini amaçlamaktadır. Çalışma, NLP (Doğal Dil İşleme) modelleri ve LLM (Large Language Model) entegrasyonlarını içermektedir.
+Bu proje, **Yelp academic veriseti** kullanılarak (veriseti korumalı olduğundan paylaşamadım), firma yorumlarının **pozitif**, **nötr** veya **negatif** olarak sınıflandırılmasını ve bu analizlerin anlamlı sonuçlara dönüştürülmesini amaçlamaktadır. Çalışma, NLP (Doğal Dil İşleme) modelleri ve LLM (Large Language Model) entegrasyonlarını içermektedir.
 
 ## Proje Hedefleri
 - Kullanıcı yorumlarını analiz ederek pozitif, nötr ve negatif kategorilere sınıflandırmak.
@@ -147,7 +147,7 @@ Aşağıdaki kod, VADER kullanarak duygu analizi gerçekleştirir:
 
 - **Roberta**: Bu dönüştürücü tabanlı model, duygu puanlarını hesaplamak için bağlamsal analiz kullanır ve inceleme metninin daha derin bir şekilde anlaşılmasını sağlar.
 
-Her iki yöntem de duyguyu sınıflandırmak ve görselleştirmek için kullanılır ve sonuçlar gelecekte kullanılmak üzere bir veritabanına kaydedilir. Ancak Roberta' nın daha doğru sonuçlar verdiği görülmektedir.
+Her iki yöntem de duyguyu sınıflandırmak ve görselleştirmek için kullanılır ve sonuçlar gelecekte kullanılmak üzere bir veritabanına kaydedilir. Ancak Roberta' nın 7 milyon veride olmasa da zaman sıkıntısından dolayı 315 bin veride işlenmesine rağmen sonuçlarının daha doğru olduğu görülmektedir.
 
 ---
 
@@ -155,7 +155,7 @@ Her iki yöntem de duyguyu sınıflandırmak ve görselleştirmek için kullanı
 -Bu işlem `data.py` içerisinde gerçeklenmiştir.
 Bu Python betiği, bir SQLite veritabanından verilerin nasıl okunacağını, işleneceğini ve bir JSON dosyasına nasıl kaydedileceğini gösterir.
 
-### Adımlar:
+##### Adımlar:
 
 1. **Veritabanı Bağlantısı**: `SQLAlchemy` kullanarak bir SQLite veritabanına bağlanın.
 2. **SQL Sorgusu**: `review_scores` tablosundan tüm kayıtları almak ve bunları bir DataFrame'e yüklemek için bir SQL sorgusu yürütün.
@@ -172,11 +172,108 @@ Bu Python betiği, bir SQLite veritabanından verilerin nasıl okunacağını, i
 -Bu işlem `data_processing_classification.py` içerisinde gerçeklenmiştir.
 Bu Python betiği, JSON verilerinin nasıl yükleneceğini, incelenip temizleneceğini ve ardından koşullar kullanılarak duygu puanlarına göre nasıl sınıflandırılacağını gösterir.
 
-### Adımlar:
+#### Adımlar:
 
 1. **JSON Verilerini Yükle**: Bir JSON dosyasını açın ve bir DataFrame'e yükleyin.
-2. **Verileri İncele**: İlk 5 kaydı görüntüleyin ve DataFrame hakkında bilgi gösterin.
+2. **Verileri İncele**: İlk 5 kaydı görüntüleyin ve DataFrame hakkında bilgi gösterin. DataFrame de 315 bin satır ve 13 bin unique firma bulunduğu görülür.
 3. **Benzersiz Değerler Kontrolü**: `review_id` ve `business_id` sütunlarındaki benzersiz değerleri sayın.
 4. **İncelemeleri Sınıflandır**: Roberta duygu puanlarına göre incelemeleri "Olumlu", "Olumsuz" veya "Nötr" olarak sınıflandırmak için koşullar uygulayın.
 5. **Sınıflandırılmış Verileri Kaydet**: İsteğe bağlı olarak sınıflandırılmış verileri yeni bir JSON dosyasına `data_w_class.json` kaydedin.
 
+---
+
+## Görev 2: LLM Yardımı ile Sonuç Üretimi
+
+### **İş İncelemesi Duygu Analizi ve İçgörü Oluşturma (LLM e Analiz Sonucu Verilerek)**
+
+-Bu işlem `llm_conclusion_w_analysis.py` içerisinde gerçeklenmiştir.
+Bu betik aşağıdaki adımları gerçekleştirir:
+1. İnceleme duygu sınıflandırmalarını içeren bir JSON dosyası yükler.
+2. En çok incelenen işletmeleri ve duygu dağılımlarını analiz eder.
+3. Müşteri memnuniyeti ve iyileştirme alanları hakkında içgörüler oluşturmak için dil modeli (LLM) çıkarımı için bir istem oluşturur.
+
+#### Beklenen Yorum
+
+- **İşletme 000104**:
+**%87 olumlu yorum** ve yalnızca **%11 olumsuz yorum** ile daha yüksek müşteri memnuniyeti.
+
+- **İşletme 000036**:
+**%19 olumsuz yorum** ile daha düşük müşteri memnuniyeti.
+Bu endişelerin giderilmesinde iyileştirmeye ihtiyaç var.
+
+#### Sonuç
+
+Ancak yorum ilk soru için daha iyi olan firmanın seçimi ve ikinci soru için ise gelişmesi gerekenin aldığı pozitif yorum miktarını vermekten öteye geçemedi. Yani Beklenen Yorum a benzer cevap üretilemedi.
+
+- **Prompt:**
+```python
+prompt = (
+    "Task: Analyze the customer satisfaction based on the provided Yelp review data.\n\n"
+    "Input:\n"
+    "Business 000104:\n"
+    "- 87% positive comments\n"
+    "- 2% neutral comments\n"
+    "- 11% negative comments\n\n"
+    "Business 000036:\n"
+    "- 77% positive comments\n"
+    "- 4% neutral comments\n"
+    "- 19% negative comments\n\n"
+    "Output:\n"
+    "1. Which business has higher customer satisfaction?\n"
+    "2. What areas need improvement? (how to improve)\n"
+)
+```
+- **Output:**
+```python
+"""
+1. Business 000104 
+2. 77% positive comments
+"""
+```
+
+---
+
+### Temel Özellikler
+
+1. **Duygu Analizi**:
+- En çok incelenen işletmelerin güçlü ve zayıf yönlerini vurgular.
+
+2. **Dil Modeli Entegrasyonu**:
+- Ham verilerden anlamlı içgörülerin çıkarılmasını otomatikleştirir.
+
+---
+
+### **Yelp İncelemelerinde Duygu Analizi ve Özel GPT-2 İnce Ayarı (Fine Tuning)**
+
+-Bu işlem `llm_conclusion_w_somedata.py` içerisinde gerçeklenmiştir.
+Bu betik, Yelp işletme inceleme verilerinin bir alt kümesini kullanarak GPT-2 modelini ince ayarlar ve müşteri memnuniyeti hakkında içgörüler üretir.
+
+#### Adımlar
+
+##### 1. Veri Hazırlama
+- Yelp yorumlarından oluşan büyük bir veri kümesini **yükleyin ve ön işleme tabi tutun**.
+- Aşağıdakiler için verilerin **alt kümelerini** seçin:
+- Eğitim: `subset_t`
+- Doğrulama: `subset_v`
+
+##### 2. Model İnce Ayarı
+- Nedensel dil modellemesi için **GPT-2 modelini** kullanın.
+- Hugging Face kütüphanesinden bir `Trainer` kullanarak modeli belirli parametrelerle **eğitin**.
+
+##### 3. İstem ve Oluşturma
+- İşletme incelemeleri hakkında anlamlı içgörüler oluşturmak için ince ayarlı modele **bir istem** sağlayın.
+
+---
+
+#### Beklenen Çıktı
+Eğitimden sonra, model şu adresleri içeren bir metin oluşturur:
+
+1. **Müşteri Memnuniyeti**:
+- İnceleme duygusu dağılımına göre daha yüksek memnuniyete sahip işletmeleri belirler.
+
+2. **İyileştirilecek Alanlar**:
+- İşletmelerin performanslarını artırabilecekleri temel alanları vurgular.
+
+#### Sonuç
+
+Ancak eğitim veri seti, eğitime uygun formatta olmadığından sonuç alınamadı.
