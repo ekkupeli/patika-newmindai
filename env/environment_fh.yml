@@ -1,0 +1,17 @@
+name: codenv
+channels:
+  - defaults
+dependencies:
+  - python=3.12
+  - git
+  - matplotlib
+  - numpy
+  - pandas
+  - seaborn
+  - scikit-learn
+  - transformers
+  - pytorch
+  - ipywidgets
+  - notebook
+  - sqlalchemy
+  - huggingface_accelerate
